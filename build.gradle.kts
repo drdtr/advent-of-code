@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.*
+
 plugins {
     kotlin("jvm") version "1.8.0"
 }
@@ -6,14 +8,16 @@ repositories {
     mavenCentral()
 }
 
-tasks {
-    sourceSets {
-        main {
-            java.srcDirs("src")
-        }
-    }
+dependencies {
+    testImplementation(kotlin("test-junit"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
+    testImplementation("org.hamcrest:hamcrest:2.2")
+}
 
-    wrapper {
-        gradleVersion = "7.6"
-    }
+tasks.test {
+    useJUnit()
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "19"
 }
