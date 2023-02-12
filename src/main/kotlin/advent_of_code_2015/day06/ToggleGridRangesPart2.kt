@@ -6,7 +6,7 @@ import kotlin.math.max
 import kotlin.system.measureNanoTime
 
 /**
- * [Probably a Fire Hazard - Part 2](https://adventofcode.com/2015/day/6)
+ * [Probably a Fire Hazard - Part 2](https://adventofcode.com/2015/day/6#part2)
  *
  * Given a boolean grid of size `1000x1000`, perform a sequence of cell value change operations
  * and return the total sum of all cells. Each operation can be:
