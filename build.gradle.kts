@@ -9,6 +9,8 @@ repositories {
 }
 
 dependencies {
+    implementation("org.json:json:20230227")
+
     testImplementation(kotlin("test-junit"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
     testImplementation("org.hamcrest:hamcrest:2.2")
