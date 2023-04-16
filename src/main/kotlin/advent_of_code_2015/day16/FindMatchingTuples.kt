@@ -15,13 +15,15 @@ import advent_of_code_2015.day16.FindMatchingTuples.Tuple.Companion.toTuple
 class FindMatchingTuples {
     enum class ComparisonOutcome { GreaterThan, Equal, LessThan }
 
-    data class Tuple(val entries: Map<String, Int>) {
+    @JvmInline
+    value class Tuple(val entries: Map<String, Int>) {
         companion object {
             fun Map<String, Int>.toTuple() = Tuple(this)
         }
     }
 
-    data class ComparisonTuple(val entries: Map<String, Pair<ComparisonOutcome, Int>>) {
+    @JvmInline
+    value class ComparisonTuple(val entries: Map<String, Pair<ComparisonOutcome, Int>>) {
         companion object {
             fun Map<String, Pair<ComparisonOutcome, Int>>.toComparisonTuple() = ComparisonTuple(this)
         }
