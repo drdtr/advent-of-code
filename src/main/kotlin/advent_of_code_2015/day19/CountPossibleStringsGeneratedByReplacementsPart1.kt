@@ -1,6 +1,7 @@
 package advent_of_code_2015.day19
 
 import Util.readInputLines
+import advent_of_code_2015.day19.ReplacementsInputReader.readInput
 
 /**
  * [Medicine for Rudolph](https://adventofcode.com/2015/day/19)
@@ -41,19 +42,6 @@ class CountPossibleStringsGeneratedByReplacementsPart1 {
 
         return possibleStrings.size
     }
-}
-
-private data class Input(val s: String, val replacements: Map<String, List<String>>)
-
-private fun readInput(inputFileName: String): Input {
-    val lines = readInputLines(2015, 19, inputFileName)
-    val separatingLineIndex = lines.size - 2
-    val replacements = lines.subList(0, separatingLineIndex).asSequence()
-            .map { line -> line.split(" ").let { it[0] to it[2] } }
-            .groupBy { replacement -> replacement.first }
-            .mapValues { (_, pairs) -> pairs.map { it.second } }
-    val s = lines.last()
-    return Input(s, replacements)
 }
 
 private fun printResult(inputFileName: String) {
