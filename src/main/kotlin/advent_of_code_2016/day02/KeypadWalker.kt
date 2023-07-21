@@ -66,20 +66,20 @@ class KeypadWalker {
             if (y in keypad.indices && x in keypad[y].indices) keypad[y][x] else null
 
         var (x, y) = start
-        val sb = StringBuilder()
-        for (steps in stepStrings) {
-            for (step in steps) {
-                val (dx, dy) = stepDiffs[step] ?: error("Invalid direction $step")
-                val newX = x + dx
-                val newY = y + dy
-                getFromKeypadIfValid(newX, newY)?.let {
-                    x = newX
-                    y = newY
+        return buildString {
+            for (steps in stepStrings) {
+                for (step in steps) {
+                    val (dx, dy) = stepDiffs[step] ?: error("Invalid direction $step")
+                    val newX = x + dx
+                    val newY = y + dy
+                    getFromKeypadIfValid(newX, newY)?.let {
+                        x = newX
+                        y = newY
+                    }
                 }
+                append(keypad[y][x])
             }
-            sb.append(keypad[y][x])
         }
-        return sb.toString()
     }
 
     companion object {

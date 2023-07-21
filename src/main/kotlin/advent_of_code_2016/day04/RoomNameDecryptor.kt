@@ -76,7 +76,7 @@ class RoomNameDecryptor {
     private fun decryptRoomName(room: Room): Room {
         val shift = room.sectorId % 26
 
-        val decryptedName = StringBuilder().apply {
+        val decryptedName = buildString {
             for (ch in room.name) append(
                 if (ch == '-') {
                     ' '
@@ -88,7 +88,7 @@ class RoomNameDecryptor {
                     chShifted
                 }
             )
-        }.toString()
+        }
 
         return room.copy(name = decryptedName)
     }
