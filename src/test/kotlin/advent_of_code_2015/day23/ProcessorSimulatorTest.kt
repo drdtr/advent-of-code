@@ -30,7 +30,7 @@ internal class ProcessorSimulatorTest {
                 listOf(
                     Increment("a"),
                     JumpIfOne("a", 2),
-                    Tripple("a"),
+                    Triple("a"),
                     Increment("a"),
                 )
             ),
@@ -40,10 +40,10 @@ internal class ProcessorSimulatorTest {
                 listOf(
                     Increment("a"),
                     JumpIfOne("a", 2),
-                    Tripple("a"),
+                    Triple("a"),
                     Increment("a"),
                     Increment("b"),
-                    Tripple("b"),
+                    Triple("b"),
                     JumpIfEven("b", +2),
                     Jump(100),
                     JumpIfOne("a", 2),
@@ -56,10 +56,10 @@ internal class ProcessorSimulatorTest {
                 registersOf("a" to 1),
                 listOf(
                     JumpIfOne("a", 2),
-                    Tripple("a"),
+                    Triple("a"),
                     Increment("a"),
                     Increment("b"),
-                    Tripple("b"),
+                    Triple("b"),
                     JumpIfEven("b", +2),
                     Jump(100),
                     JumpIfOne("a", 2),

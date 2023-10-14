@@ -21,7 +21,7 @@ import advent_of_code_2015.day23.ProcessorSimulator.Registers.Companion.register
 class ProcessorSimulator {
     sealed interface Instruction
     data class Half(val register: String) : Instruction
-    data class Tripple(val register: String) : Instruction
+    data class Triple(val register: String) : Instruction
     data class Increment(val register: String) : Instruction
     data class Jump(val offset: Int) : Instruction
     data class JumpIfEven(val register: String, val offset: Int) : Instruction
@@ -51,7 +51,7 @@ class ProcessorSimulator {
         private fun executeCurrentInstruction() {
             when (val i = instructions[instructionPointer++]) {
                 is Half       -> registers[i.register] = (registers[i.register] ?: 0) / 2
-                is Tripple    -> registers[i.register] = (registers[i.register] ?: 0) * 3
+                is Triple     -> registers[i.register] = (registers[i.register] ?: 0) * 3
                 is Increment  -> registers[i.register] = (registers[i.register] ?: 0) + 1
                 is Jump       -> instructionPointer += -1 + i.offset
                 is JumpIfEven -> if ((registers[i.register] ?: 0) % 2 == 0L) instructionPointer += -1 + i.offset
@@ -68,7 +68,7 @@ private fun readInput(inputFileName: String): List<Instruction> {
             .map { tokens ->
                 when (tokens[0]) {
                     "hlf" -> Half(tokens[1])
-                    "tpl" -> Tripple(tokens[1])
+                    "tpl" -> Triple(tokens[1])
                     "inc" -> Increment(tokens[1])
                     "jmp" -> Jump(tokens[1].toInt())
                     "jie" -> JumpIfEven(tokens[1], tokens[2].toInt())
