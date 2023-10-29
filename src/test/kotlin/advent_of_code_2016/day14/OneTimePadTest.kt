@@ -12,8 +12,8 @@ import java.util.stream.Stream
 internal class OneTimePadTest {
     @ParameterizedTest
     @ArgumentsSource(ArgumentsProviderOneTimePad::class)
-    fun `test getNthKey`(expected: Int, salt: String, keyNumber: Int, intervalSize: Int) = with(OneTimePad()) {
-        assertEquals(expected, getIndexProducingNthKey(salt, keyNumber, intervalSize))
+    fun `test getNthKey`(expected: Int, salt: String, keyNumber: Int, numOfNextHashes: Int) = with(OneTimePad()) {
+        assertEquals(expected, getIndexProducingNthKey(salt, keyNumber, numOfNextHashes))
     }
 
     private class ArgumentsProviderOneTimePad : ArgumentsProvider {
@@ -21,6 +21,25 @@ internal class OneTimePadTest {
             Arguments.of(39, "abc", 1, 1000),
             Arguments.of(92, "abc", 2, 1000),
             Arguments.of(22728, "abc", 64, 1000),
+        )
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(ArgumentsProviderOneTimePadWithHashReps::class)
+    fun `test getNthKey with hash repetitions`(
+        expected: Int,
+        salt: String,
+        keyNumber: Int,
+        numOfNextHashes: Int,
+        numOfMd5HashReps: Int,
+    ) =
+        with(OneTimePad()) {
+            assertEquals(expected, getIndexProducingNthKey(salt, keyNumber, numOfNextHashes, numOfMd5HashReps))
+        }
+
+    private class ArgumentsProviderOneTimePadWithHashReps : ArgumentsProvider {
+        override fun provideArguments(context: ExtensionContext?) = Stream.of(
+            Arguments.of(22551, "abc", 64, 1000, 2017),
         )
     }
 

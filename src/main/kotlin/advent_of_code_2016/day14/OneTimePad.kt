@@ -32,20 +32,50 @@ import Util.readInputLines
  *
  *
  * For a given salt input, what index will produce your 64th one-time pad key?
+ *
+ *
+ * ### Part 3
+ *
+ * You add [key stretching](https://en.wikipedia.org/wiki/Key_stretching):
+ * instead of applying the `MD5` hash function once, you apply 2016 additional hashing, i.e.,
+ * the original string will be hashed 2017 times.
+ *
+ *
+ * Examples:
+ * - Pre-arranged salt `abc`
+ * - the index `22551` will produce the 64th key
+ *
+ *
  */
 class OneTimePad {
-    fun getIndexProducingNthKey(salt: String, keyNumber: Int, numOfNextHashes: Int = 1000): Int {
+    fun getIndexProducingNthKey(
+        salt: String,
+        keyNumber: Int,
+        numOfNextHashes: Int = 1000,
+        numOfMd5HashReps: Int = 1,
+    ): Int {
         var keysFound = 0
+        // the next hashes, stored in a circular list, so adding a hash automatically removes the oldest hash
         val nextHashes = CircularArrayList<Set<Char>>(numOfNextHashes)
+        // tracks whether a given char is contained in any of the char sets in nextHashes
+        val charCounts = AsciiCharCounts()
         for (index in 0 until numOfNextHashes) {
-            nextHashes += (salt + index).md5().getAllCharsFromSameCharQuintuplets()
+            val hashCharsProducingQuintuplets =
+                calcHash(salt + index, numOfMd5HashReps).getAllCharsFromSameCharQuintuplets()
+            nextHashes += hashCharsProducingQuintuplets
+            hashCharsProducingQuintuplets.forEach { ch -> charCounts.incCount(ch) }
         }
 
         for (index in 0..Int.MAX_VALUE) {
-            nextHashes += (salt + (index + numOfNextHashes)).md5().getAllCharsFromSameCharQuintuplets()
-            val hash = (salt + index).md5()
+            val hashCharsProducingQuintuplets =
+                calcHash(salt + (index + numOfNextHashes), numOfMd5HashReps).getAllCharsFromSameCharQuintuplets()
+            nextHashes[0].forEach { ch -> charCounts.decCount(ch) }
+            hashCharsProducingQuintuplets.forEach { ch -> charCounts.incCount(ch) }
+            nextHashes += hashCharsProducingQuintuplets
+
+            val hash = calcHash(salt + index, numOfMd5HashReps)
             val tripletChar = hash.getCharFromFirstSameCharTriplet() ?: continue
-            if (nextHashes.anyContains(tripletChar)) {
+            if (charCounts.getCount(tripletChar) > 0) {
                 keysFound++
                 if (keysFound == keyNumber) {
                     return index
@@ -53,6 +83,24 @@ class OneTimePad {
             }
         }
         error("Couldn't find an index producing key number $keyNumber.")
+    }
+
+    private class AsciiCharCounts() {
+        private val charCounts = IntArray(128)
+
+        fun incCount(ch: Char) = charCounts[ch.code]++
+
+        fun decCount(ch: Char) = charCounts[ch.code]--
+
+        fun getCount(ch: Char) = charCounts[ch.code]
+    }
+
+    private fun calcHash(s: String, numOfMd5HashReps: Int): String {
+        var hash = s
+        repeat(numOfMd5HashReps) {
+            hash = hash.md5()
+        }
+        return hash
     }
 
     private fun CircularArrayList<Set<Char>>.anyContains(char: Char): Boolean {
@@ -103,10 +151,14 @@ private fun printResult(inputFileName: String) {
     val salt = readInput(inputFileName)
     val solver = OneTimePad()
     val numOfNextHashes = 1000
-    // part 1
     val keyNumber = 64
+    // part 1
     val res1 = solver.getIndexProducingNthKey(salt, keyNumber, numOfNextHashes)
     println("Index producing one-time pad key number $keyNumber: $res1")
+    // part 2
+    val numOfMd5HashReps = 2017
+    val res2 = solver.getIndexProducingNthKey(salt, keyNumber, numOfNextHashes, numOfMd5HashReps)
+    println("Index producing one-time pad key number $keyNumber with key stretching: $res2")
 }
 
 fun main() {
