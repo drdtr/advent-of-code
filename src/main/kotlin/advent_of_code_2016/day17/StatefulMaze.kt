@@ -48,6 +48,16 @@ import java.util.ArrayDeque
  * - For `passcode = kglvqrro`, the shortest path is `DDUDRLRRUDRD`
  * - For `passcode = ulqzkmiv`, the shortest path is `DRURDRUDDLLDLUURRDULRLDUUDDDRR`
  *
+ *
+ * ### Part 2
+ *
+ * Find the length of a longest path from starting points `S` to target point `T`.
+ *
+ * Example:
+ * - For `passcode = ihgpwlah`, the longest path has 370 steps.
+ * - For `passcode = kglvqrro`, the longest path has 492 steps.
+ * - For `passcode = ulqzkmiv`, the longest path has 830 steps.
+ *
  */
 class StatefulMaze {
     data class Point(val x: Int, val y: Int)
@@ -83,6 +93,40 @@ class StatefulMaze {
         error("Couldn't find a path from starting point $startingPoint to the target point $targetPoint")
     }
 
+    fun maxPathLength(
+        passcode: String,
+        width: Int = 4,
+        height: Int = 4,
+        startingPoint: Point = Point(0, 0),
+        targetPoint: Point = Point(3, 3),
+    ): Any {
+        var maxPathLen = 0
+        val q = ArrayDeque<PointAndPath>()
+
+        q.offer(PointAndPath(startingPoint, ""))
+
+        while (q.isNotEmpty()) {
+            val (p, path) = q.poll()
+            val openDoors = (passcode + path).md5().toOpenDoors()
+            for ((dir, dx, dy) in openDoors) {
+                val pnpNext = PointAndPath(Point(p.x + dx, p.y + dy), path + dir)
+                // no need to check if the state has already been visited: since it consists of the coordinates
+                // and the path to it, we'll never encounter the same state because whenever we visit the same point
+                // again the path must have been different.
+                //
+                if (pnpNext.point.x !in 0 until width || pnpNext.point.y !in 0 until height) continue
+                if (pnpNext.point == targetPoint) {
+                    val pathLen = pnpNext.path.length
+                    if (maxPathLen < pathLen) maxPathLen = pathLen
+                } else {
+                    q.offer(pnpNext)
+                }
+            }
+        }
+
+        return maxPathLen
+    }
+
     companion object {
         private val directionsAndDiffs = listOf(
             DirectionAndDiff('U', 0, -1),
@@ -111,6 +155,9 @@ private fun printResult(inputFileName: String) {
     // part 1
     val res1 = solver.shortestPath(passcode)
     println("The shortest path for passcode $passcode: $res1")
+    // part 2
+    val res2 = solver.maxPathLength(passcode)
+    println("The maximum path length for passcode $passcode: $res2")
 }
 
 fun main() {

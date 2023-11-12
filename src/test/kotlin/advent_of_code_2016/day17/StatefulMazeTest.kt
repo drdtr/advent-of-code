@@ -10,16 +10,30 @@ import java.util.stream.Stream
 
 internal class StatefulMazeTest {
     @ParameterizedTest
-    @ArgumentsSource(ArgumentsProviderStatefulMaze::class)
+    @ArgumentsSource(ArgumentsProviderStatefulMazeShortestPath::class)
     fun `test shortestPath`(expected: String, passcode: String) = with(StatefulMaze()) {
         assertEquals(expected, shortestPath(passcode))
     }
 
-    private class ArgumentsProviderStatefulMaze : ArgumentsProvider {
+    private class ArgumentsProviderStatefulMazeShortestPath : ArgumentsProvider {
         override fun provideArguments(context: ExtensionContext?) = Stream.of(
             Arguments.of("DDRRRD", "ihgpwlah"),
             Arguments.of("DDUDRLRRUDRD", "kglvqrro"),
             Arguments.of("DRURDRUDDLLDLUURRDULRLDUUDDDRR", "ulqzkmiv"),
+        )
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(ArgumentsProviderStatefulMazeMaxPathLength::class)
+    fun `test maxPathLength`(expected: Int, passcode: String) = with(StatefulMaze()) {
+        assertEquals(expected, maxPathLength(passcode))
+    }
+
+    private class ArgumentsProviderStatefulMazeMaxPathLength : ArgumentsProvider {
+        override fun provideArguments(context: ExtensionContext?) = Stream.of(
+            Arguments.of(370, "ihgpwlah"),
+            Arguments.of(492, "kglvqrro"),
+            Arguments.of(830, "ulqzkmiv"),
         )
     }
 }
