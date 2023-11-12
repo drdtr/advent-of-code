@@ -28,4 +28,21 @@ internal class CyclicEliminationTest {
             Arguments.of(2, 9),
         )
     }
+
+    @ParameterizedTest
+    @ArgumentsSource(ArgumentsProviderCyclicEliminationAcrossCircle::class)
+    fun `test lastUneliminatedAcrossCircle`(expected: Int, n: Int) = with(CyclicElimination()) {
+        assertEquals(expected, lastUneliminatedAcrossCircle(n))
+    }
+
+    private class ArgumentsProviderCyclicEliminationAcrossCircle : ArgumentsProvider {
+        override fun provideArguments(context: ExtensionContext?) = Stream.of(
+            Arguments.of(0, 1),
+            Arguments.of(0, 2),
+            Arguments.of(2, 3),
+            Arguments.of(0, 4),
+            Arguments.of(1, 5),
+            Arguments.of(2, 6),
+        )
+    }
 }
