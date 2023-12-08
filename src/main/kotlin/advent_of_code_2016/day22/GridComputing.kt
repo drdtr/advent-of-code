@@ -19,7 +19,7 @@ import java.util.regex.Pattern
  *
  */
 class GridComputing {
-    data class Node(val x: Int, val y: Int, val size: Int, val used: Int, val avail: Int)
+    data class Node(val x: Int, val y: Int, val used: Int, val avail: Int)
 
     fun countViablePairs(nodes: Collection<Node>): Int {
         val nodesSortedByUsed = nodes.sortedBy { it.used }
@@ -54,7 +54,6 @@ private fun parseNode(s: String): Node = with(nodeLineParsingPattern.matcher(s))
     return Node(
         x = group(1).toInt(),
         y = group(2).toInt(),
-        size = group(3).toInt(),
         used = group(4).toInt(),
         avail = group(5).toInt(),
     )
