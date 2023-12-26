@@ -18,15 +18,11 @@ internal class GridComputingTest {
     }
 
     @ParameterizedTest
-    @ArgumentsSource(ArgumentsProviderGridComputingViablePairs::class)
-    fun `test minStepsToMoveDataFromSrcToDest`(
-        expected: Int,
-        srcPoint: Pair<Int, Int>,
-        destPoint: Pair<Int, Int>,
-        nodes: List<Node>,
-    ) = with(GridComputing()) {
-        // TODO
-    }
+    @ArgumentsSource(ArgumentsProviderGridComputingMinSteps::class)
+    fun `test minStepsToMoveDataFromSrcToDest`(expected: Int, srcPoint: Point, destPoint: Point, nodes: List<Node>) =
+        with(GridComputing()) {
+            assertEquals(expected, minStepsToMoveDataFromSourceToTarget(srcPoint, destPoint, nodes))
+        }
 
     private interface ArgumentsProviderGridComputing : ArgumentsProvider {
         companion object {
@@ -51,7 +47,7 @@ internal class GridComputingTest {
 
         class ArgumentsProviderGridComputingMinSteps : ArgumentsProviderGridComputing {
             override fun provideArguments(context: ExtensionContext?): Stream<Arguments> {
-                return Stream.of(Arguments.of(7, 0 to 2, 0 to 0, grid3x3))
+                return Stream.of(Arguments.of(7, Point(2, 0), Point(0, 0), grid3x3))
             }
         }
     }
