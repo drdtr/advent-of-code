@@ -22,8 +22,17 @@ import Util.readInputLines
  *
  * For the input of size `m * n` and `k` nodes to visit, the runtime is `O(m * n * 2^k)`.
  *
- * Even more efficient, if not fast enough for the puzzle input, could be Extended Dijkstra algorithm with bitmask,
- * see [Finding the Shortest Path in a Graph Visiting All Nodes](https://www.baeldung.com/cs/shortest-path-visiting-all-nodes#dijkstra-approach).
+ *
+ * ## Part 2
+ *
+ * Additionally to the task in part 1, return to the starting node `0`.
+ *
+ * ### Solution idea
+ *
+ * BFS with bitmask, like in part 1, yet we need to also allow to visit nodes with complete bitmask
+ * one another time on a possible way back to the starting node, so we use an additional bit to mark
+ * that a node has been visited once again _after_ reaching the target bitmask `2^k - 1`.
+ * The minimum distance is then the distance to reach the starting node `0` having also reached the target bitmask.
  */
 class ShortestPathVisitingGivenNodes {
     data class Point(val x: Int, val y: Int)
@@ -31,7 +40,7 @@ class ShortestPathVisitingGivenNodes {
 
     private fun Point.withBitmask(bitmask: Int) = PointBitmask(x, y, bitmask)
 
-    fun minLengthOfPathVisitingAllGivenNodes(grid: Array<CharArray>): Int {
+    fun minLengthOfPathVisitingAllGivenNodes(grid: Array<CharArray>, returnToStart: Boolean = false): Int {
         val nodesToVisit = buildMap {
             for (y in grid.indices) for (x in grid[y].indices) {
                 val ch = grid[y][x]
@@ -49,7 +58,10 @@ class ShortestPathVisitingGivenNodes {
                 "Incorrect node numbering - expected $expected but was $sortedListOfNodesToVisit"
             }
         }
-        return minLengthOfPathVisitingAllGivenNodes(grid, startingPoint, nodesToVisit)
+        return when (returnToStart) {
+            true  -> minLengthOfPathVisitingAllGivenNodesAndReturiningToStart(grid, startingPoint, nodesToVisit)
+            false -> minLengthOfPathVisitingAllGivenNodes(grid, startingPoint, nodesToVisit)
+        }
     }
 
     fun minLengthOfPathVisitingAllGivenNodes(
@@ -96,6 +108,53 @@ class ShortestPathVisitingGivenNodes {
         return minTotalLen
     }
 
+    fun minLengthOfPathVisitingAllGivenNodesAndReturiningToStart(
+        grid: Array<CharArray>,
+        startingPoint: Point,
+        nodesToVisit: Map<Point, Int>
+    ): Int {
+        var minTotalLen = Int.MAX_VALUE
+        val m = grid.size
+        val n = grid[0].size
+        val k = nodesToVisit.size
+        val targetBitmask = (1 shl k) - 1
+        val visitedOnceAgainBit = 1 shl k
+
+        val q = java.util.ArrayDeque<Pair<PointBitmask, Int>>()
+        val visited = hashSetOf<PointBitmask>()
+
+        fun isFree(p: Point) = p.y in 0 until m && p.x in 0 until n && grid[p.y][p.x] != WALL
+
+        val startingPointBitmask = startingPoint.withBitmask(1)
+        q += startingPointBitmask to 0
+        visited += startingPointBitmask
+
+        while (q.isNotEmpty()) {
+            val (pointBitmask, dist) = q.poll()
+            val (x, y, bitmask) = pointBitmask
+            for ((dx, dy) in moveDiffs) {
+                val pNext = Point(x + dx, y + dy)
+                if (!isFree(pNext)) continue
+                val distNext = dist + 1
+                if (pNext == startingPoint && bitmask and targetBitmask == targetBitmask) {
+                    if (minTotalLen > distNext) minTotalLen = distNext
+                    continue
+                }
+
+                val bitmaskNext = bitmask or (nodesToVisit[pNext]?.let { 1 shl it } ?: 0)
+                if (bitmask and visitedOnceAgainBit != 0) continue
+                val pointBitmaskNext = pNext.withBitmask(bitmaskNext)
+                if (pointBitmaskNext !in visited) {
+                    q += pointBitmaskNext to distNext
+                    visited += pointBitmaskNext
+                }
+            }
+        }
+
+        return minTotalLen
+    }
+
+
     companion object {
         private const val WALL = '#'
         private const val START = '0'
@@ -118,8 +177,11 @@ private fun printResult(inputFileName: String) {
     val grid = readInput(inputFileName)
     //println(grid.joinToString(separator = "\n") { it.joinToString(separator = "") })
     // part 1
-    val res1 = solver.minLengthOfPathVisitingAllGivenNodes(grid)
+    val res1 = solver.minLengthOfPathVisitingAllGivenNodes(grid, returnToStart = false)
     println("Minimum number of steps to visit all given nodes: $res1")
+    // part 2
+    val res2 = solver.minLengthOfPathVisitingAllGivenNodes(grid, returnToStart = true)
+    println("Minimum number of steps to visit all given nodes and return to start: $res2")
 
 }
 
