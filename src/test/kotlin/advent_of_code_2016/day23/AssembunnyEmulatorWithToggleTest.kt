@@ -5,7 +5,6 @@ import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Assembunny.Constan
 import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Assembunny.Copy
 import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Assembunny.Dec
 import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Assembunny.Inc
-import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Assembunny.Jump
 import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Assembunny.Register
 import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Assembunny.Toggle
 import advent_of_code_2016.day23.AssembunnyEmulatorWithToggle.Registers.Companion.registersOf
@@ -19,11 +18,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 
-internal class AssembunnyEmulatorTest {
+internal class AssembunnyEmulatorWithToggleTest {
 
     @ParameterizedTest
-    @ArgumentsSource(ArgumentsProviderAssembunnyEmulator::class)
-    fun `test AssembunnyEmulator`(
+    @ArgumentsSource(ArgumentsProviderAssembunnyEmulatorWithToggle::class)
+    fun `test AssembunnyEmulatorWithToggle`(
         expectedValuesForSelectedRegisters: Map<Char, Int>,
         instructions: List<Assembunny.Instruction>
     ) =
@@ -35,7 +34,7 @@ internal class AssembunnyEmulatorTest {
             }
         }
 
-    private class ArgumentsProviderAssembunnyEmulator : ArgumentsProvider {
+    private class ArgumentsProviderAssembunnyEmulatorWithToggle : ArgumentsProvider {
         override fun provideArguments(context: ExtensionContext?) = Stream.of(
             Arguments.of(
                 registersOf('a' to 3),
@@ -60,16 +59,9 @@ internal class AssembunnyEmulatorTest {
 
     companion object {
         fun copy(value: Int, destRegister: Char) = Copy(Constant(value), Register(destRegister))
-        fun copy(srcRegister: Char, destRegister: Char) = Copy(Register(srcRegister), Register(destRegister))
         fun inc(register: Char) = Inc(Register(register))
         fun dec(register: Char) = Dec(Register(register))
-        fun jump(condition: Int, offset: Int) = Jump(Constant(condition), Constant(offset))
-        fun jump(conditionRegister: Char, offset: Int) = Jump(Register(conditionRegister), Constant(offset))
-        fun jump(condition: Int, offsetRegister: Char) = Jump(Constant(condition), Register(offsetRegister))
-        fun jump(conditionRegister: Char, offsetRegister: Char) =
-            Jump(Register(conditionRegister), Register(offsetRegister))
 
         fun toggle(register: Char) = Toggle(Register(register))
-        fun toggle(value: Int) = Toggle(Constant(value))
     }
 }
