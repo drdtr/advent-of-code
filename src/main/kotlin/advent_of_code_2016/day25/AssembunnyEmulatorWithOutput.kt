@@ -1,6 +1,7 @@
 package advent_of_code_2016.day25
 
 import Util.readInputLines
+import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.*
 import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.Assembunny.Constant
 import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.Assembunny.Copy
 import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.Assembunny.Dec
@@ -11,7 +12,6 @@ import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.Assembunny.Jump
 import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.Assembunny.Out
 import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.Assembunny.Register
 import advent_of_code_2016.day25.AssembunnyEmulatorWithOutput.Registers.Companion.registersOf
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * [Clock Signal](https://adventofcode.com/2016/day/25)
@@ -43,24 +43,31 @@ class AssembunnyEmulatorWithOutput {
         data class Out(val valueExpr: Expr) : Instruction
     }
 
-    fun createEmulatorWithCancelSwitch(
+    sealed interface OutputCheckingResult
+    object ExpectedOutput : OutputCheckingResult
+    data class UnexpectedOutput(val outputPos: Int, val expected: Int, val actual: Int) : OutputCheckingResult
+
+    fun emulateAndCheckOutput(
         instructions: List<Instruction>,
         initRegisters: Registers,
-    ): Pair<Emulator, AtomicBoolean> {
-        val cancel = AtomicBoolean(false)
-        return Emulator(instructions, initRegisters, cancel) to cancel
+        expectedOutput: List<Int>,
+    ): OutputCheckingResult {
+        val emulator = Emulator(instructions, initRegisters)
+        var pos = -1
+        for (element in emulator.emulateOutput()) {
+            if (++pos == expectedOutput.size) break
+            val expected = expectedOutput[pos]
+            if (element != expected) return UnexpectedOutput(outputPos = pos, expected = expected, actual = element)
+        }
+        return ExpectedOutput
     }
 
-    class Emulator(
-        val instructions: List<Instruction>,
-        initRegisters: Registers,
-        val cancel: AtomicBoolean = AtomicBoolean(false),
-    ) {
+    private class Emulator(val instructions: List<Instruction>, initRegisters: Registers) {
         private val registers = initRegisters.registers.toMutableMap()
         private var instructionPointer = 0
 
         fun emulateOutput() = sequence {
-            while (!cancel.get() && instructionPointer in instructions.indices) {
+            while (instructionPointer in instructions.indices) {
                 when (val i = instructions[instructionPointer++]) {
                     is Copy -> registers[i.destRegister.name] = evaluate(i.valueExpr)
                     is Inc  -> registers[i.register.name] = (registers[i.register.name] ?: 0) + 1
@@ -109,33 +116,23 @@ private fun printResult(inputFileName: String) {
     val instructions = readInput(inputFileName)
     val solver = AssembunnyEmulatorWithOutput()
 
-    // just try the first 1000 positive integers
+    // After 10_000 elements of the output sequence, we'd be sufficiently confident to be getting the wanted output.
+    // This won't increase the runtime for emulations where the actual output sequence is not as expected,
+    // because the output will typically diverge already after a few elements,
+    // so we won't be checking 10_000 elements for these cases.
+    val expectedOutput = List(10_000) { it % 2 } // sequence 0, 1, 0, 1,...
+    // try the first 1000 positive integers as initial value for the register `a`
     for (a in 1..1000) {
         var foundInitialValueForCorrectSequence = false
-        val (emulator, cancel) = solver.createEmulatorWithCancelSwitch(instructions, registersOf('a' to a))
-        // after these many element of the output sequence, we'd be sufficiently confident that it works
-        val maxCount = 10_000
-        var sequenceIndex = 0
-        for (element in emulator.emulateOutput()) {
-            if (cancel.get()) {
-                // We've cancelled the sequence in the previous iteration, and needed just one more iteration
-                // to let the sequence know. Now we can quit the loop.
+        when (val outputCheckRes = solver.emulateAndCheckOutput(instructions, registersOf('a' to a), expectedOutput)) {
+            is UnexpectedOutput -> with(outputCheckRes) {
+                println("Output sequence element at $outputPos for a=$a: expected $expected but was $actual")
+            }
+
+            is ExpectedOutput   -> {
+                println("For the initial register value a=$a, the output sequence was as expected for the first ${expectedOutput.size} elements")
                 break
             }
-            val expected = sequenceIndex % 2 // sequence 0, 1, 0, 1,...
-            if (element != expected) {
-                println("Output sequence element at $sequenceIndex for a=$a: expected $expected but was $element")
-                cancel.set(true)
-            }
-            if (++sequenceIndex == maxCount) {
-                println("Output sequence for a=$a was as expected for the first $maxCount elements")
-                cancel.set(true)
-                foundInitialValueForCorrectSequence = true
-            }
-        }
-        if (foundInitialValueForCorrectSequence) {
-            println("Correct output sequence found for first $maxCount elements for initial value a=$a")
-            break
         }
     }
 }
