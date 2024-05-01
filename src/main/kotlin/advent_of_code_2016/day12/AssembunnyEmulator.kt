@@ -59,8 +59,8 @@ class AssembunnyEmulator {
         private fun executeCurrentInstruction() {
             when (val i = instructions[instructionPointer++]) {
                 is Copy -> registers[i.destRegister.name] = evaluate(i.valueExpr)
-                is Inc  -> registers[i.register.name] = (registers[i.register.name] ?: 0) + 1
-                is Dec  -> registers[i.register.name] = (registers[i.register.name] ?: 0) - 1
+                is Inc  -> registers[i.register.name] = evaluate(i.register) + 1
+                is Dec  -> registers[i.register.name] = evaluate(i.register) - 1
                 is Jump -> if (evaluate(i.conditionExpr) != 0) {
                     instructionPointer += -1 + evaluate(i.offsetExpr)
                 }
