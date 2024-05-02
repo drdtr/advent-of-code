@@ -1,24 +1,24 @@
 package advent_of_code_2017.day18
 
-import Util.readInputLines
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Add
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Constant
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Expr
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Instruction
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Jump
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Mod
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Mult
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Rcv
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Register
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Set
-import advent_of_code_2017.day18.DuetAssemblerEmulator.DuetAssembler.Snd
-import advent_of_code_2017.day18.DuetAssemblerEmulator.Registers.Companion.registersOf
+import advent_of_code_2017.day18.DuetAssembler.Add
+import advent_of_code_2017.day18.DuetAssembler.Constant
+import advent_of_code_2017.day18.DuetAssembler.Expr
+import advent_of_code_2017.day18.DuetAssembler.Instruction
+import advent_of_code_2017.day18.DuetAssembler.Jump
+import advent_of_code_2017.day18.DuetAssembler.Mod
+import advent_of_code_2017.day18.DuetAssembler.Mult
+import advent_of_code_2017.day18.DuetAssembler.Rcv
+import advent_of_code_2017.day18.DuetAssembler.Register
+import advent_of_code_2017.day18.DuetAssembler.Registers
+import advent_of_code_2017.day18.DuetAssembler.Registers.Companion.registersOf
+import advent_of_code_2017.day18.DuetAssembler.Set
+import advent_of_code_2017.day18.DuetAssembler.Snd
 
 /**
  * [Duet - Part 1](https://adventofcode.com/2017/day/18)
  *
- * Emulate a given program in an assembly language *Duet that supports following instructions:
- * - `snd X`- plays a sound with frequency `X`.
+ * Emulate a given program in an assembly language *Duet* that supports following instructions:
+ * - `snd X` - plays a sound with frequency `X`.
  * - `set X Y` - sets register `X` to value `Y`.
  * - `add X Y` - add value `Y` to register `X`.
  * - `mul X Y` - multiply register `X` by value `Y`.
@@ -28,33 +28,9 @@ import advent_of_code_2017.day18.DuetAssemblerEmulator.Registers.Companion.regis
  *
  * After finishing the emulation, return the first recovered frequency.
  */
-class DuetAssemblerEmulator {
-    @JvmInline
-    value class Registers(val registers: Map<Char, Long>) {
-        companion object {
-            fun registersOf(vararg registerValues: Pair<Char, Long>) = Registers(mapOf(*registerValues))
-        }
-    }
-
-    object DuetAssembler {
-        sealed interface Expr
-        data class Constant(val value: Int) : Expr
-        data class Register(val name: Char) : Expr
-
-        sealed interface Instruction
-        data class Snd(val register: Register) : Instruction
-        data class Set(val register: Register, val valueExpr: Expr) : Instruction
-        data class Add(val register: Register, val valueExpr: Expr) : Instruction
-        data class Mult(val register: Register, val valueExpr: Expr) : Instruction
-        data class Mod(val register: Register, val valueExpr: Expr) : Instruction
-        data class Rcv(val register: Register) : Instruction
-        data class Jump(val conditionExpr: Expr, val offsetExpr: Expr) : Instruction
-    }
-
-    fun emulateUntilFirstRecoveredValue(
-        instructions: List<Instruction>,
-        initRegisters: Registers = registersOf(),
-    ): Int = Emulator(instructions, initRegisters).emulateUntilFirstRecoveredValue().toInt()
+class DuetAssemblerEmulatorPart1 {
+    fun emulateUntilFirstRecoveredValue(instructions: List<Instruction>): Int =
+        Emulator(instructions).emulateUntilFirstRecoveredValue().toInt()
 
     private class Emulator(
         val instructions: List<Instruction>,
@@ -74,7 +50,7 @@ class DuetAssemblerEmulator {
 
         private fun executeCurrentInstruction() {
             when (val i = instructions[instructionPointer++]) {
-                is Snd  -> lastOutputValue = evaluate(i.register)
+                is Snd  -> lastOutputValue = evaluate(i.expr)
                 is Set  -> registers[i.register.name] = evaluate(i.valueExpr)
                 is Add  -> registers[i.register.name] = evaluate(i.register) + evaluate(i.valueExpr)
                 is Mult -> registers[i.register.name] = evaluate(i.register) * evaluate(i.valueExpr)
@@ -96,41 +72,10 @@ class DuetAssemblerEmulator {
     }
 }
 
-private fun readInput(inputFileName: String): List<Instruction> {
-    fun parseRegister(s: String) =
-        if (s.length == 1) {
-            Register(s[0])
-        } else {
-            error("Expected integer constant or one-letter register name but was $s")
-        }
-
-    fun parseExpr(s: String) = try {
-        Constant(s.toInt())
-    } catch (e: NumberFormatException) {
-        parseRegister(s)
-    }
-    return readInputLines(2017, 18, inputFileName)
-            .map { line -> line.split(" ", ",").filter { it.isNotEmpty() } }
-            .map { tokens ->
-                when (tokens[0]) {
-                    "snd" -> Snd(parseRegister(tokens[1]))
-                    "set" -> Set(parseRegister(tokens[1]), parseExpr(tokens[2]))
-                    "add" -> Add(parseRegister(tokens[1]), parseExpr(tokens[2]))
-                    "mul" -> Mult(parseRegister(tokens[1]), parseExpr(tokens[2]))
-                    "mod" -> Mod(parseRegister(tokens[1]), parseExpr(tokens[2]))
-                    "rcv" -> Rcv(parseRegister(tokens[1]))
-                    "jgz" -> Jump(parseExpr(tokens[1]), parseExpr(tokens[2]))
-                    else  -> error("Invalid instruction \"$tokens\"")
-                }
-            }
-}
-
 private fun printResult(inputFileName: String) {
-    val instructions = readInput(inputFileName)
-    println(instructions.joinToString(separator = "\n"))
-    val solver = DuetAssemblerEmulator()
+    val instructions = DuetAssembler.readInput(inputFileName)
+    val solver = DuetAssemblerEmulatorPart1()
 
-    // part 1
     val firstRecoveredValue = solver.emulateUntilFirstRecoveredValue(instructions)
     println("First recovered value: $firstRecoveredValue")
 }
