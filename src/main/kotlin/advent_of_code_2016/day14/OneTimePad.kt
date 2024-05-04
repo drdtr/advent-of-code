@@ -1,7 +1,7 @@
 package advent_of_code_2016.day14
 
-import Util.md5
 import Util.readInputLines
+import com.twmacinta.util.MD5
 
 /**
  * [One-Time Pad](https://adventofcode.com/2016/day/14)
@@ -101,7 +101,7 @@ class OneTimePad {
         hashCache[hashKey]?.let { return it }
         var hash = s
         repeat(numOfMd5HashReps) {
-            hash = hash.md5()
+            hash = MD5(hash).asHex()
         }
         hashCache[hashKey] = hash
         return hash

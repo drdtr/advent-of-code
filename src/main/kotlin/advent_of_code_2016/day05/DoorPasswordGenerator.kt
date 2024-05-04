@@ -1,7 +1,7 @@
 package advent_of_code_2016.day05
 
-import Util.md5
 import Util.readInputLines
+import com.twmacinta.util.MD5
 
 /**
  * [How About a Nice Game of Chess](https://adventofcode.com/2016/day/5)
@@ -44,7 +44,7 @@ class DoorPasswordGenerator {
     fun generateDoorPassword(doorId: String, targetLength: Int = 8): String = buildString {
         for (i in 0 until Int.MAX_VALUE) {
             val s = doorId + i
-            val hash = s.md5()
+            val hash = MD5(s).asHex()
             if (hash.startsWith("00000")) {
                 append(hash[5])
                 if (length == targetLength) break
@@ -61,7 +61,7 @@ class DoorPasswordGenerator {
 
         for (i in 0 until Int.MAX_VALUE) {
             val s = doorId + i
-            val hash = s.md5()
+            val hash = MD5(s).asHex()
             if (hash.startsWith("00000")) {
                 if (!isValidPosChar(hash[5])) continue
                 val pos = hash[5] - '0'

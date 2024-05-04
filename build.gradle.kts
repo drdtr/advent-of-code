@@ -11,6 +11,7 @@ repositories {
 dependencies {
     implementation("org.json:json:20231013")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("com.joyent.util:fast-md5:2.7.1")
 
     testImplementation(kotlin("test-junit"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
