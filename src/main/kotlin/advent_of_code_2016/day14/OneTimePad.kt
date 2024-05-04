@@ -85,7 +85,7 @@ class OneTimePad {
         error("Couldn't find an index producing key number $keyNumber.")
     }
 
-    private class AsciiCharCounts() {
+    private class AsciiCharCounts {
         private val charCounts = IntArray(128)
 
         fun incCount(ch: Char) = charCounts[ch.code]++
@@ -95,19 +95,16 @@ class OneTimePad {
         fun getCount(ch: Char) = charCounts[ch.code]
     }
 
+    private val hashCache = hashMapOf<Pair<String, Int>, String>()
     private fun calcHash(s: String, numOfMd5HashReps: Int): String {
+        val hashKey = s to numOfMd5HashReps
+        hashCache[hashKey]?.let { return it }
         var hash = s
         repeat(numOfMd5HashReps) {
             hash = hash.md5()
         }
+        hashCache[hashKey] = hash
         return hash
-    }
-
-    private fun CircularArrayList<Set<Char>>.anyContains(char: Char): Boolean {
-        for (i in 0 until size) {
-            if (char in this[i]) return true
-        }
-        return false
     }
 
     private fun String.getCharFromFirstSameCharTriplet(): Char? {

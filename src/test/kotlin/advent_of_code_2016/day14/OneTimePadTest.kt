@@ -1,6 +1,5 @@
 package advent_of_code_2016.day14
 
-import advent_of_code_2016.day13.Maze.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
