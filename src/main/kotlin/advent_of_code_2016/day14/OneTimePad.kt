@@ -2,6 +2,11 @@ package advent_of_code_2016.day14
 
 import Util.readInputLines
 import com.twmacinta.util.MD5
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newFixedThreadPoolContext
+import kotlinx.coroutines.runBlocking
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * [One-Time Pad](https://adventofcode.com/2016/day/14)
@@ -59,21 +64,21 @@ class OneTimePad {
         val nextHashes = CircularArrayList<Set<Char>>(numOfNextHashes)
         // tracks whether a given char is contained in any of the char sets in nextHashes
         val charCounts = AsciiCharCounts()
+        val hashCalculator = CachingConcurrentHashCalculator(salt, numOfMd5HashReps)
         for (index in 0 until numOfNextHashes) {
-            val hashCharsProducingQuintuplets =
-                calcHash(salt + index, numOfMd5HashReps).getAllCharsFromSameCharQuintuplets()
+            val hashCharsProducingQuintuplets = hashCalculator.getHash(index).getAllCharsFromSameCharQuintuplets()
             nextHashes += hashCharsProducingQuintuplets
             hashCharsProducingQuintuplets.forEach { ch -> charCounts.incCount(ch) }
         }
 
         for (index in 0..Int.MAX_VALUE) {
             val hashCharsProducingQuintuplets =
-                calcHash(salt + (index + numOfNextHashes), numOfMd5HashReps).getAllCharsFromSameCharQuintuplets()
+                hashCalculator.getHash(index + numOfNextHashes).getAllCharsFromSameCharQuintuplets()
             nextHashes[0].forEach { ch -> charCounts.decCount(ch) }
             hashCharsProducingQuintuplets.forEach { ch -> charCounts.incCount(ch) }
             nextHashes += hashCharsProducingQuintuplets
 
-            val hash = calcHash(salt + index, numOfMd5HashReps)
+            val hash = hashCalculator.getHash(index)
             val tripletChar = hash.getCharFromFirstSameCharTriplet() ?: continue
             if (charCounts.getCount(tripletChar) > 0) {
                 keysFound++
@@ -85,6 +90,58 @@ class OneTimePad {
         error("Couldn't find an index producing key number $keyNumber.")
     }
 
+    /**
+     * Utilizes cache and concurrency to speed up calculation of MD5 hashes.
+     * Calculates hashes of strings of the form `<salt><index>`,
+     * where `salt` is a fixed string and `index` is an integer.
+     * Works best if most of the requested hashes are calculated for contiguous indices, e.g.,
+     * `["salt0", "salt1", ..., "salt10000"]`.
+     */
+    private class CachingConcurrentHashCalculator(val salt: String, val numOfMd5HashReps: Int) {
+        companion object {
+            const val CACHE_PREFILL_SIZE = 256
+        }
+
+        private val hashCache = Collections.synchronizedMap(hashMapOf<Int, String>())
+        private val currMaxCachedIndex = AtomicInteger(CACHE_PREFILL_SIZE - 1)
+        private val threadPoolContextForPrefillingHashCache =
+            Runtime.getRuntime().availableProcessors().let { numOfProcessors ->
+                val numOfThreads = (numOfProcessors - 1).coerceAtLeast(2)
+                newFixedThreadPoolContext(numOfThreads, "FixedThreadPool with $numOfThreads threads")
+            }
+
+        init {
+            prefillHashCache(0 until CACHE_PREFILL_SIZE)
+        }
+
+        fun getHash(index: Int): String {
+            if (index > currMaxCachedIndex.get()) {
+                synchronized(this) {
+                    val newMaxIndex = index + CACHE_PREFILL_SIZE
+                    prefillHashCache(currMaxCachedIndex.get() + 1..newMaxIndex)
+                    currMaxCachedIndex.set(newMaxIndex)
+                }
+            }
+            return hashCache[index] ?: error(
+                "Cache didn't contain element $index after prefilling. " +
+                        "\nCache: ${hashCache.keys.sorted()}"
+            )
+        }
+
+        private fun prefillHashCache(indices: IntRange) =
+            runBlocking(threadPoolContextForPrefillingHashCache) {
+                indices.forEach { launch { calcHash(it) } }
+            }
+
+        private fun calcHash(index: Int) {
+            var hash = salt + index
+            repeat(numOfMd5HashReps) {
+                hash = MD5(hash).asHex()
+            }
+            hashCache[index] = hash
+        }
+    }
+
     private class AsciiCharCounts {
         private val charCounts = IntArray(128)
 
@@ -93,18 +150,6 @@ class OneTimePad {
         fun decCount(ch: Char) = charCounts[ch.code]--
 
         fun getCount(ch: Char) = charCounts[ch.code]
-    }
-
-    private val hashCache = hashMapOf<Pair<String, Int>, String>()
-    private fun calcHash(s: String, numOfMd5HashReps: Int): String {
-        val hashKey = s to numOfMd5HashReps
-        hashCache[hashKey]?.let { return it }
-        var hash = s
-        repeat(numOfMd5HashReps) {
-            hash = MD5(hash).asHex()
-        }
-        hashCache[hashKey] = hash
-        return hash
     }
 
     private fun String.getCharFromFirstSameCharTriplet(): Char? {
