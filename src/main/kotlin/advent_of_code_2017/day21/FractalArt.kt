@@ -19,8 +19,6 @@ import java.util.regex.Pattern
  *
  * A rule matches any rotation or flip of the left-side square,
  * but the resulting right-side square is always the same.
- *
- *
  */
 class FractalArt {
     /**
@@ -242,7 +240,7 @@ private fun printResult(inputFileName: String) {
     println("Matrix after $reps1 rep(s):\n$resSquare1")
     println("Number of set pixels: $resPixelCount1")
 
-    // part 1
+    // part 2
     val reps2 = 18
     val resSquare2 = solver.enhanceMatrix(squareTransformationRules, startingSquare, reps2)
     val resPixelCount2 = resSquare2.countPixels()
