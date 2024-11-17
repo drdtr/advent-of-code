@@ -4,7 +4,7 @@ import advent_of_code_2017.day22.GridNodeMarkerPart1.*
 import advent_of_code_2017.day22.MarkedNodeUtil.nodeMarkingStringsToBooleanArrays
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.Arguments.*
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.stream.Stream
@@ -20,7 +20,7 @@ class GridNodeMarkerPart1Test {
 
     private class ArgumentsProviderGridNodeMarker : ArgumentsProvider {
         override fun provideArguments(context: ExtensionContext?) = Stream.of(
-            Arguments.of(
+            arguments(
                 0,
                 listOf(
                     "..#",
@@ -35,7 +35,7 @@ class GridNodeMarkerPart1Test {
                     markedCount = 0
                 )
             ),
-            Arguments.of(
+            arguments(
                 1,
                 listOf(
                     "..#",
@@ -51,7 +51,7 @@ class GridNodeMarkerPart1Test {
                     markedCount = 1
                 )
             ),
-            Arguments.of(
+            arguments(
                 2,
                 listOf(
                     "..#",
@@ -66,7 +66,7 @@ class GridNodeMarkerPart1Test {
                     markedCount = 1
                 )
             ),
-            Arguments.of(
+            arguments(
                 6,
                 listOf(
                     "..#",
@@ -85,7 +85,7 @@ class GridNodeMarkerPart1Test {
                     markedCount = 5
                 )
             ),
-            Arguments.of(
+            arguments(
                 7,
                 listOf(
                     "..#",
