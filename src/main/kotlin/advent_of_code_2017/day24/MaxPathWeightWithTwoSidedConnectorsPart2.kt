@@ -17,29 +17,34 @@ import advent_of_code_2017.day24.TwoSidedConnectors.Connector
  * ### Part 1
  * - Calculating the path weight as sum of all side values, what is the maximum possible path weight?
  */
-class MaxPathWeightWithTwoSidedConnectorsPart1 {
-    fun findMaxPathWeight(connectors: List<Connector>): Int =
-        MaxPathWeightFinderBacktracking(connectors).maxPathWeight()
+class MaxPathWeightWithTwoSidedConnectorsPart2 {
+    fun findMaxPathWeightForLongestPath(connectors: List<Connector>): Int =
+        MaxPathWeightForLongestPathFinderBacktracking(connectors).maxPathWeightForLongestPath()
 
-    private class MaxPathWeightFinderBacktracking(val connectors: List<Connector>) {
+    private class MaxPathWeightForLongestPathFinderBacktracking(val connectors: List<Connector>) {
         private val connectorIndicesBySideValue: Map<Int, List<Int>> = connectors
                 .mapIndexed { index, (a, b) -> listOf(a to index, b to index) }
                 .flatten()
                 .groupBy({ it.first }) { it.second }
+        private var maxLength = 0
         private var maxWeight = 0
 
-        fun maxPathWeight(): Int {
+        fun maxPathWeightForLongestPath(): Int {
             backtrack()
             return maxWeight
         }
 
         private fun backtrack(
+            currLength: Int = 0,
             currWeight: Int = 0,
             currOpenSideValue: Int = 0,
             numOfUsedConnectors: Int = 0,
             isAvailableConnectorIndex: BooleanArray = BooleanArray(connectors.size) { true }
         ) {
-            if (maxWeight < currWeight) maxWeight = currWeight
+            if (maxLength <= currLength) {
+                maxLength = currLength
+                if (maxWeight < currWeight) maxWeight = currWeight
+            }
             if (numOfUsedConnectors == connectors.size) return
 
             val indicesOfConnectorsWithOpenSideValue = connectorIndicesBySideValue[currOpenSideValue].orEmpty()
@@ -49,6 +54,7 @@ class MaxPathWeightWithTwoSidedConnectorsPart1 {
                 val connector = connectors[connectorIndex]
                 isAvailableConnectorIndex[connectorIndex] = false
                 backtrack(
+                    currLength = currLength + 1,
                     currWeight = currWeight + connector.weight,
                     currOpenSideValue = connector.otherSideValue(currOpenSideValue),
                     numOfUsedConnectors = numOfUsedConnectors + 1,
@@ -62,10 +68,9 @@ class MaxPathWeightWithTwoSidedConnectorsPart1 {
 
 private fun printResult(inputFileName: String) {
     val connectors = TwoSidedConnectors.readInput(inputFileName)
-//    println(connectors.sortedBy { it.a }.joinToString(separator = "\n"))
 
-    val solver = MaxPathWeightWithTwoSidedConnectorsPart1()
-    println("Maximum path weight: ${solver.findMaxPathWeight(connectors)}")
+    val solver = MaxPathWeightWithTwoSidedConnectorsPart2()
+    println("Maximum weight of longest path: ${solver.findMaxPathWeightForLongestPath(connectors)}")
 }
 
 fun main() {
