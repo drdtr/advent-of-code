@@ -1,6 +1,6 @@
 package advent_of_code_2017.day24
 
-import advent_of_code_2017.day24.MaxPathWeightWithTwoSidedConnectorsPart1.*
+import advent_of_code_2017.day24.TwoSidedConnectors.Connector
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest

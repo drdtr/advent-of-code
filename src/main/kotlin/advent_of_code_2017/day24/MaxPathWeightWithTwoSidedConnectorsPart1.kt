@@ -1,7 +1,6 @@
 package advent_of_code_2017.day24
 
-import Util.readInputLines
-import advent_of_code_2017.day24.MaxPathWeightWithTwoSidedConnectorsPart1.*
+import advent_of_code_2017.day24.TwoSidedConnectors.Connector
 
 /**
  * [Electromagnetic Moat](https://adventofcode.com/2017/day/24)
@@ -19,17 +18,6 @@ import advent_of_code_2017.day24.MaxPathWeightWithTwoSidedConnectorsPart1.*
  * - Calculating the path weight as sum of all side values, what is the maximum possible path weight?
  */
 class MaxPathWeightWithTwoSidedConnectorsPart1 {
-    data class Connector(val a: Int, val b: Int) {
-        val weight: Int
-            get() = a + b
-
-        fun otherSideValue(thisSideValue: Int) = when (thisSideValue) {
-            a    -> b
-            b    -> a
-            else -> error("$thisSideValue not a side value in $this")
-        }
-    }
-
     fun findMaxPathWeight(connectors: List<Connector>): Int =
         MaxPathLengthFinderBacktracking(connectors).maxPathLength()
 
@@ -72,15 +60,8 @@ class MaxPathWeightWithTwoSidedConnectorsPart1 {
     }
 }
 
-private fun readInput(inputFileName: String): List<Connector> =
-    readInputLines(2017, 24, inputFileName).map { line ->
-        line.split("/")
-                .map { it.trim().toInt() }
-                .let { (a, b) -> Connector(a, b) }
-    }
-
 private fun printResult(inputFileName: String) {
-    val connectors = readInput(inputFileName)
+    val connectors = TwoSidedConnectors.readInput(inputFileName)
 //    println(connectors.sortedBy { it.a }.joinToString(separator = "\n"))
 
     val solver = MaxPathWeightWithTwoSidedConnectorsPart1()
