@@ -31,4 +31,58 @@ class ManhattanDistanceAreaTest {
             ),
         )
     }
+
+    @ParameterizedTest
+    @ArgumentsSource(ArgumentsProviderManhattanDistanceAreaMaxDistSum::class)
+    fun `test calcLargestAreaNearAllPointsBruteForce`(expected: Int, maxDistSum: Int, points: List<Point>) =
+        with(ManhattanDistanceArea()) {
+            assertEquals(expected, calcLargestAreaNearAllPointsBruteForce(maxDistSum, points))
+        }
+
+    @ParameterizedTest
+    @ArgumentsSource(ArgumentsProviderManhattanDistanceAreaMaxDistSum::class)
+    fun `test calcLargestAreaNearAllPoints`(expected: Int, maxDistSum: Int, points: List<Point>) =
+        with(ManhattanDistanceArea()) {
+            assertEquals(expected, calcLargestAreaNearAllPoints(maxDistSum, points))
+        }
+
+    private class ArgumentsProviderManhattanDistanceAreaMaxDistSum : ArgumentsProvider {
+        override fun provideArguments(p0: ExtensionContext?) = Stream.of(
+            arguments(
+                16, 32, listOf(
+                    Point(1, 1),
+                    Point(1, 6),
+                    Point(8, 3),
+                    Point(3, 4),
+                    Point(5, 5),
+                    Point(8, 9),
+                )
+            ),
+            arguments(
+                151, 100, listOf(
+                    Point(1, 1),
+                    Point(1, 6),
+                    Point(3, 10),
+                    Point(7, 3),
+                    Point(3, 4),
+                    Point(5, 5),
+                    Point(8, 9),
+                    Point(10, 16),
+                )
+            ),
+            arguments(
+                157, 120, listOf(
+                    Point(1, 1),
+                    Point(1, 10),
+                    Point(1, 6),
+                    Point(3, 10),
+                    Point(7, 3),
+                    Point(3, 4),
+                    Point(5, 5),
+                    Point(8, 9),
+                    Point(10, 16),
+                )
+            ),
+        )
+    }
 }

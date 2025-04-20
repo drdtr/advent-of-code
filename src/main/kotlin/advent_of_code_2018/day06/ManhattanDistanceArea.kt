@@ -2,6 +2,7 @@ package advent_of_code_2018.day06
 
 import Util.readInputLines
 import advent_of_code_2018.day06.ManhattanDistanceArea.*
+import kotlin.math.abs
 
 /**
  * [Chronal Coordinates](https://adventofcode.com/2018/day/6)
@@ -16,19 +17,23 @@ import advent_of_code_2018.day06.ManhattanDistanceArea.*
  * # Part 1
  * Determine the size of the largest finite area around a point.
  *
+ * # Part 2
+ * Determine the size of the largest finite where for each cell the sum of Manhatten distances to all points
+ * is less than the given limit.
+ *
  */
 class ManhattanDistanceArea {
     data class Point(val x: Int, val y: Int)
 
+    // For clarity, we distinguish syntactically between the public class Point in the method signature
+    // and the private class Cell denoting grid cells.
+    private data class Cell(val x: Int, val y: Int)
+
     fun calcLargestFiniteArea(inputPoints: Collection<Point>): Int {
         val points = getDistinctNormalizedPoints(inputPoints)
-        println(points.mapIndexed { index, point -> "$index: $point" }.joinToString(separator = "\n"))
         val xMax = points.maxOf { it.x }
         val yMax = points.maxOf { it.y }
 
-        // For clarity, we distinguish syntactically between the public class Point in the method signature
-        // and the local class Cell denoting grid cells.
-        data class Cell(val x: Int, val y: Int)
         data class PointDist(val pointIndex: Int, val dist: Int)
 
         val equalPointDistMarker = PointDist(-1, -1)
@@ -55,8 +60,7 @@ class ManhattanDistanceArea {
                 if (existingPointDist == null) {
                     grid[y][x] = pointDistNext
                     q.offer(Cell(x, y) to pointDistNext)
-                } else if (existingPointDist != equalPointDistMarker
-                    && existingPointDist.pointIndex != pointDist.pointIndex
+                } else if (existingPointDist != equalPointDistMarker && existingPointDist.pointIndex != pointDist.pointIndex
                     // Since it's a multi-source BFS, the already stored distance can only be smaller or equal.
                     // This is why we only need to distinguish the two cases:
                     // - if it's smaller, then we keep it because it's closer to the other point
@@ -71,15 +75,85 @@ class ManhattanDistanceArea {
         val areaByPoint = IntArray(points.size)
         grid.forEach { row ->
             row.forEach { pointDist ->
-                if (pointDist != null
-                    && pointDist != equalPointDistMarker
-                    && pointDist.pointIndex !in pointsWithInfiniteArea
-                ) {
+                if (pointDist != null && pointDist != equalPointDistMarker && pointDist.pointIndex !in pointsWithInfiniteArea) {
                     areaByPoint[pointDist.pointIndex]++
                 }
             }
         }
         return requireNotNull(areaByPoint.maxOrNull())
+    }
+
+    /**
+     * For `p` points in a `m*n` grid, the runtime complexity of the brute-force implementation
+     * is `O(p * m * n)`.
+     */
+    fun calcLargestAreaNearAllPointsBruteForce(maxDistSumExcl: Int, inputPoints: Collection<Point>): Int {
+        val points = getDistinctNormalizedPoints(inputPoints)
+        val xMax = points.maxOf { it.x }
+        val yMax = points.maxOf { it.y }
+
+        val grid = Array(yMax + 1) { y ->
+            IntArray(xMax + 1) { x ->
+                points.sumOf { abs(it.x - x) + abs(it.y - y) }
+            }
+        }
+
+        return grid.sumOf { row -> row.count { it < maxDistSumExcl } }
+    }
+
+    /**
+     * For the improved implementation, we utilize the fact that the Manhattan distance can be calculated
+     * separately for `x` and `y` components: we will separately add the `x` distances for all cells
+     * and `y` distances for all cells. This allows us to omit computing the distance for each point,
+     * but instead only count the number of points in a row or column:
+     * - For the `y` component, we will traverse the grid from top to bottom,
+     * keep a running sum of the number of points above and below the current row,
+     * and use them to add the `y` component of the Manhattan distance to each cell of the current row.
+     * - Similarly for the `x` component, we will traverse the grid from left to right and add the `x` component
+     * of the Manhattan distance to each cell of the current column.
+     *
+     *
+     * For `p` points in a `m*n` grid, the runtime complexity is `O(p + m * n) = O(m * n)` because `p <= m * n`
+     * since all points are inside the `m*n` grid.
+     */
+    fun calcLargestAreaNearAllPoints(maxDistSumExcl: Int, inputPoints: Collection<Point>): Int {
+        val points = getDistinctNormalizedPoints(inputPoints)
+        val xMax = points.maxOf { it.x }
+        val yMax = points.maxOf { it.y }
+
+        val grid = Array(yMax + 1) { IntArray(xMax + 1) }
+
+        val pointsInRow = IntArray(yMax + 1).also { count -> for (p in points) count[p.y]++ }
+        var pointsAbove = 0
+        var pointsBelow = pointsInRow.sum() - pointsInRow[0]
+        var yDistSumAbove = 0
+        var yDistSumBelow = pointsInRow.mapIndexed { index, numOfPoints -> index * numOfPoints }.sum()
+        for (y in 0..yMax) {
+            for (x in 0..xMax) {
+                grid[y][x] += yDistSumAbove + yDistSumBelow
+            }
+            yDistSumBelow -= pointsBelow
+            pointsAbove += pointsInRow[y]
+            pointsBelow -= if (y < yMax) pointsInRow[y + 1] else 0
+            yDistSumAbove += pointsAbove
+        }
+
+        val pointsInCol = IntArray(xMax + 1).also { count -> for (p in points) count[p.x]++ }
+        var pointsLeft = 0
+        var pointsRight = pointsInCol.sum() - pointsInCol[0]
+        var xDistSumLeft = 0
+        var xDistSumRight = pointsInCol.mapIndexed { index, numOfPoints -> index * numOfPoints }.sum()
+        for (x in 0..xMax) {
+            for (y in 0..yMax) {
+                grid[y][x] += xDistSumLeft + xDistSumRight
+            }
+            xDistSumRight -= pointsRight
+            pointsLeft += pointsInCol[x]
+            pointsRight -= if (x < xMax) pointsInCol[x + 1] else 0
+            xDistSumLeft += pointsLeft
+        }
+
+        return grid.sumOf { row -> row.count { it < maxDistSumExcl } }
     }
 
     /**
@@ -102,10 +176,9 @@ class ManhattanDistanceArea {
     }
 }
 
-private fun readInput(inputFileName: String): Set<Point> =
-    readInputLines(2018, 6, inputFileName)
-            .map { line -> line.split(",").map { it.trim().toInt() }.let { (x, y) -> Point(x, y) } }
-            .toSet()
+private fun readInput(inputFileName: String): Set<Point> = readInputLines(2018, 6, inputFileName).map { line ->
+    line.split(",").map { it.trim().toInt() }.let { (x, y) -> Point(x, y) }
+}.toSet()
 
 private fun printResult(inputFileName: String) {
     val points = readInput(inputFileName)
@@ -114,6 +187,10 @@ private fun printResult(inputFileName: String) {
     // part 1
     val res1 = solver.calcLargestFiniteArea(points)
     println("Largest finite area: $res1")
+
+    // part 2
+    val res2 = solver.calcLargestAreaNearAllPoints(maxDistSumExcl = 10_000, points)
+    println("Largest finite area: $res2")
 }
 
 fun main() {
