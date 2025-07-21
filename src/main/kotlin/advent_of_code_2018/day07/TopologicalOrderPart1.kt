@@ -1,9 +1,11 @@
 package advent_of_code_2018.day07
 
 import Util.readInputLines
-import advent_of_code_2018.day07.TopologicalOrder.*
+import advent_of_code_2018.day07.TopologicalOrderUtil.Edge
+import advent_of_code_2018.day07.TopologicalOrderUtil.countIncomingEdgesByNode
+import advent_of_code_2018.day07.TopologicalOrderUtil.parseEdge
+import advent_of_code_2018.day07.TopologicalOrderUtil.toAdjacencyListsOrderedAlphabetically
 import java.util.*
-import java.util.regex.Pattern
 
 /**
  * [The Sum of Its Parts](https://adventofcode.com/2018/day/7)
@@ -39,8 +41,6 @@ import java.util.regex.Pattern
  *
  */
 class TopologicalOrder {
-    data class Edge(val src: Char, val dest: Char)
-
     fun getTopologicalOrderOfNodes(edges: List<Edge>): String {
         val adjLists: MutableMap<Char, out SortedSet<Char>> = toAdjacencyListsOrderedAlphabetically(edges)
         val incomingEdgeCountByNode: MutableMap<Char, Int> = countIncomingEdgesByNode(edges)
@@ -67,28 +67,6 @@ class TopologicalOrder {
         check(adjLists.isEmpty()) { "Graph has at least one cycle" }
         return res.toString()
     }
-
-    private fun toAdjacencyListsOrderedAlphabetically(edges: List<Edge>): MutableMap<Char, out SortedSet<Char>> =
-        hashMapOf<Char, TreeSet<Char>>().apply {
-            for ((src, dest) in edges) computeIfAbsent(src) { TreeSet() } += dest
-        }
-
-    private fun countIncomingEdgesByNode(edges: List<Edge>): MutableMap<Char, Int> =
-        hashMapOf<Char, Int>().apply {
-            for ((src, dest) in edges) {
-                computeIfAbsent(src) { 0 }
-                compute(dest) { _, count -> (count ?: 0) + 1 }
-            }
-        }
-}
-
-private val edgePattern = Pattern.compile("Step (\\w) must be finished before step (\\w) can begin.")
-
-private fun parseEdge(s: String): Edge {
-    with(edgePattern.matcher(s)) {
-        if (matches()) return Edge(group(1)[0], group(2)[0])
-    }
-    error("Invalid edge input: $s")
 }
 
 private fun readInput(inputFileName: String): List<Edge> =
@@ -99,9 +77,8 @@ private fun printResult(inputFileName: String) {
 //    println(edges.joinToString(separator = "\n"))
     val solver = TopologicalOrder()
 
-    //  Part 1
-    val res1 = solver.getTopologicalOrderOfNodes(edges)
-    println("Nodes in topological order: $res1")
+    val res = solver.getTopologicalOrderOfNodes(edges)
+    println("Nodes in topological order: $res")
 }
 
 fun main() {
