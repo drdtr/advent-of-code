@@ -57,19 +57,10 @@ import Util.readInputLines
  *
  */
 class MaxSquareSum {
-    data class MaxSquareSumResult(val sum: Int, val x: Int, val y: Int)
+    data class MaxSumOf3x3SquareResult(val sum: Int, val x: Int, val y: Int)
 
-    fun findMaxSumOf3x3Square(gridWidth: Int, gridHeight: Int, k: Int): MaxSquareSumResult {
-        val grid = Array(gridHeight) { y ->
-            IntArray(gridWidth) { x ->
-                val v1 = x + 10
-                val v2 = v1 * y
-                val v3 = v2 + k
-                val v4 = v3 * v1
-                val v5 = (v4 / 100) % 10
-                v5 - 5
-            }
-        }
+    fun findMaxSumOf3x3Square(gridWidth: Int, gridHeight: Int, k: Int): MaxSumOf3x3SquareResult {
+        val grid = createGrid(gridHeight, gridWidth, k)
         var maxSum = Int.MIN_VALUE
         var maxX = 0
         var maxY = 0
@@ -92,7 +83,64 @@ class MaxSquareSum {
                 recordMaxIfExceeded(sum = squareSum, x = x, y = y)
             }
         }
-        return MaxSquareSumResult(sum = maxSum, x = maxX, y = maxY)
+        return MaxSumOf3x3SquareResult(sum = maxSum, x = maxX, y = maxY)
+    }
+
+
+    data class MaxSumOfSquareResult(val sum: Int, val x: Int, val y: Int, val size: Int)
+
+    fun findMaxSumOfAnySquare(gridWidth: Int, gridHeight: Int, k: Int): MaxSumOfSquareResult {
+        val grid = createGrid(gridHeight, gridWidth, k)
+        var maxSum = Int.MIN_VALUE
+        var maxX = 0
+        var maxY = 0
+        var maxSize = 0
+        fun recordMaxIfExceeded(sum: Int, x: Int, y: Int, size: Int) {
+            if (maxSum < sum) {
+                maxSum = sum
+                maxX = x
+                maxY = y
+                maxSize = size
+            }
+        }
+
+        var topLeftSquareSum = 0
+        for (n in 1..gridWidth) {
+            // Extend the top-left square size from `n - 1` to `n`.
+            topLeftSquareSum += grid[n - 1][n - 1] + (0 until n - 1).sumOf { i -> grid[i][n - 1] + grid[n - 1][i] }
+            var leftSquareSum = topLeftSquareSum
+            for (y in 0..gridHeight - n) {
+                if (y > 0) {
+                    // Move the left square down by 1 row
+                    leftSquareSum += (0 until n).sumOf { i -> grid[y + n - 1][i] - grid[y - 1][i] }
+                }
+                var squareSum = leftSquareSum
+                recordMaxIfExceeded(sum = squareSum, x = 0, y = y, size = n)
+                for (x in 1..gridWidth - n) {
+                    // Move the square to the right by 1 column
+                    squareSum += (y until y + n).sumOf { i -> grid[i][x + n - 1] - grid[i][x - 1] }
+                    recordMaxIfExceeded(sum = squareSum, x = x, y = y, size = n)
+                }
+            }
+        }
+        return MaxSumOfSquareResult(sum = maxSum, x = maxX, y = maxY, size = maxSize)
+    }
+
+    private fun calcSquareSum(grid: Array<IntArray>, topLeftX: Int, topLeftY: Int, squareSize: Int): Int {
+        return (topLeftY until topLeftY + squareSize).sumOf { y ->
+            (topLeftX until topLeftX + squareSize).sumOf { x -> grid[y][x] }
+        }
+    }
+
+    private fun createGrid(gridHeight: Int, gridWidth: Int, k: Int): Array<IntArray> = Array(gridHeight) { y ->
+        IntArray(gridWidth) { x ->
+            val v1 = x + 10
+            val v2 = v1 * y
+            val v3 = v2 + k
+            val v4 = v3 * v1
+            val v5 = (v4 / 100) % 10
+            v5 - 5
+        }
     }
 }
 
@@ -108,7 +156,8 @@ private fun printResult(inputFileName: String) {
     println("Maximum 3*3 square sum: $res1")
 
     // part 2
-    // TODO
+    val res2 = solver.findMaxSumOfAnySquare(gridWidth = 300, gridHeight = 300, k = k)
+    println("Maximum n*n square sum for: $res2")
 
 }
 
