@@ -25,11 +25,24 @@ class ProductionRulesEmulatorTest {
         assertEquals(expectedOffset, currentState.offset)
     }
 
+    @ParameterizedTest(name = "{index}: from {0} expected {1} with offset {2} ")
+    @ArgumentsSource(ArgumentsProviderEmulateProductionRules::class)
+    fun `test EmulatorWithTrie`(
+        initialState: String,
+        expected: String,
+        expectedOffset: Int,
+        productionRules: List<ProductionRule>,
+    ) = with(EmulatorWithTrie(initialState, productionRules)) {
+        emulate()
+        assertEquals(expected, currentState.cells)
+        assertEquals(expectedOffset, currentState.offset)
+    }
+
     @ParameterizedTest
     @ArgumentsSource(ArgumentsProviderSumOfFilledCellPositions::class)
     fun `test sumOfFilledCellPositions`(
         initialState: String,
-        numOfCycles: Int,
+        numOfCycles: Long,
         expected: Int,
         productionRules: List<ProductionRule>,
     ) = with(ProductionRulesEmulator()) {

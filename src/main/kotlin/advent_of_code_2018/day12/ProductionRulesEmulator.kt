@@ -79,13 +79,40 @@ class ProductionRulesEmulator {
     fun sumOfFilledCellPositions(
         initialState: String,
         productionRules: List<ProductionRule>,
-        numOfCycles: Int = 1,
-    ): Int = with(EmulatorBruteForce(initialState, productionRules)) {
-        repeat(numOfCycles) {
+        numOfCycles: Long = 1,
+    ): Long = with(EmulatorBruteForce(initialState, productionRules)) {
+//    ): Long = with(EmulatorWithTrie(initialState, productionRules)) {
+        var previousHash = initialState.hashCode()
+        var previousCells = initialState
+        var previousOffset = 0
+        for (i in 1..numOfCycles) {
             emulate()
+            val hash = currentState.cells.hashCode()
+            if (hash == previousHash) {
+                if (currentState.cells == previousCells) {
+                    println("No change after cycle $i in the state $previousCells, offset ${currentState.offset}")
+                    println("Offset difference: ${currentState.offset - previousOffset}")
+                    println("Shortcutting the computation after finding a cycle:")
+                    val finalOffset = currentState.offset + numOfCycles - i
+                    println("Offset after $numOfCycles will be $finalOffset")
+                    var res = 0L
+                    for ((i, ch) in currentState.cells.withIndex()) {
+                        if (ch == CELL_FILLED) {
+                            res += i + finalOffset
+                        }
+                    }
+                    return res
+                }
+            }
+            previousHash = hash
+            previousCells = currentState.cells
+            previousOffset = currentState.offset
+
         }
         println("Num of cells: " + currentState.cells.length)
-        currentState.cells.withIndex().sumOf { (i, ch) -> if (ch == CELL_FILLED) i + currentState.offset else 0 }
+        return currentState.cells.withIndex()
+                .sumOf { (i, ch) -> if (ch == CELL_FILLED) i + currentState.offset else 0 }
+                .toLong()
     }
 
 
@@ -130,6 +157,79 @@ class ProductionRulesEmulator {
                 return true
             }
             return productionRules.find { it.matches() }
+        }
+    }
+
+    internal class EmulatorWithTrie(initialState: String, val productionRules: List<ProductionRule>) {
+        private val ruleTrie = CellTrie().apply {
+            val rulesProducingFilledCells = productionRules.filter { it.rhs == CELL_FILLED }.map { it.lhs }
+            rulesProducingFilledCells.forEach { insert(it) }
+        }
+        private var cells = initialState.toCharArray()
+
+
+        // Offset from 0 in the initial state to 0 in the current cells,
+        // where cells[i - offset] corresponds to initialState[i].
+        private var offset = 0
+
+        data class EmulationState(val cells: String, val offset: Int)
+
+        val currentState: EmulationState
+            get() = EmulationState(String(cells), offset)
+
+        private fun cellAt(i: Int) = if (i in cells.indices) cells[i] else CELL_EMPTY
+
+        private inner class CellTrie {
+            private inner class TrieNode {
+                val children = mutableMapOf<Char, TrieNode>()
+                var endOfWord = false
+            }
+
+            private val root = TrieNode()
+
+            /** Inserts a string into the trie. */
+            fun insert(s: String) {
+                var curr = root
+                for (c in s) {
+                    curr = curr.children.getOrPut(c) { TrieNode() }
+                }
+                curr.endOfWord = true
+            }
+
+            /** Returns if the cells in the given index range is in the trie. */
+            fun containsCells(fromIndex: Int, toIndexExcl: Int): Boolean {
+                var curr = root
+                for (i in fromIndex until toIndexExcl) {
+                    val ch = cellAt(i)
+                    curr = curr.children[ch] ?: return false
+                }
+                return curr.endOfWord
+            }
+        }
+
+
+        fun emulate() {
+            // We extend the new cells by 2 beyond left and right margin
+            // so a rule could be applied and fill a cell to the left or to the right of the current cells.
+            //   cells:        0 1 2 3
+            //   newCells: . . . . . . . .
+            // This also means that the new cells are shifted by 2 relative to the current cells
+            val newCellsShift = 2
+            val newCells = CharArray(cells.size + newCellsShift * 2)
+            for (i in newCells.indices) {
+                newCells[i] = if (matchesRuleProducingFilledCell(i - newCellsShift)) CELL_FILLED else CELL_EMPTY
+            }
+            // Trim empty cells on the left and right.
+            val fromIndex = newCells.indexOf(CELL_FILLED).coerceAtLeast(0)
+            val toIndexIncl = newCells.lastIndexOf(CELL_FILLED).coerceAtLeast(1)
+            cells = newCells.copyOfRange(fromIndex, toIndexIncl + 1)
+            offset += (fromIndex - newCellsShift)
+        }
+
+        private fun matchesRuleProducingFilledCell(index: Int): Boolean {
+            // the left-most char of a rule's LHS must match the cell that's 2 steps to the left
+            val startOffset = -2
+            return ruleTrie.containsCells(index + startOffset, index + startOffset + 5)
         }
     }
 
@@ -181,17 +281,14 @@ private fun printResult(inputFileName: String) {
     val solver = ProductionRulesEmulator()
 
     // part 1
-    var numOfCycles = 20
+    var numOfCycles = 20L
     val res1 = solver.sumOfFilledCellPositions(input.initialState, input.productionRules, numOfCycles)
     println("Sum of pot numbers with plants after $numOfCycles cycles: $res1")
 
     // part 2
-//    numOfCycles = 200_000
-//    val durationNanos = measureNanoTime {
-//        val res2 = solver.sumOfFilledCellPositions(input.initialState, input.productionRules, numOfCycles)
-//        println("Sum of pot numbers with plants after $numOfCycles cycles: $res2")
-//    }
-//    println("Duration: %d ms".format(durationNanos / 1_000_000))
+    numOfCycles = 50_000_000_000L
+    val res2 = solver.sumOfFilledCellPositions(input.initialState, input.productionRules, numOfCycles)
+    println("Sum of pot numbers with plants after $numOfCycles cycles: $res2")
 
 }
 
