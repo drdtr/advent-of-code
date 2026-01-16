@@ -4,7 +4,6 @@ import advent_of_code_2018.day11.MaxSquareSum.*
 import advent_of_code_2018.day11.MaxSquareSumTest.ArgumentsProviders.ArgumentsProviderMaxSumOf3x3Square
 import advent_of_code_2018.day11.MaxSquareSumTest.ArgumentsProviders.ArgumentsProviderMaxSumOfAnySquare
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Named.*
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments.*
@@ -32,12 +31,12 @@ class MaxSquareSumTest {
         class ArgumentsProviderMaxSumOf3x3Square : ArgumentsProvider {
             override fun provideArguments(p0: ExtensionContext?) = Stream.of(
                 arguments(
-                    named("expected", MaxSumOf3x3SquareResult(sum = 29, x = 33, y = 45)),
-                    named("k", 18), named("gridWidth", 300), named("gridHeight", 300)
+                    MaxSumOf3x3SquareResult(sum = 29, x = 33, y = 45),
+                    18, 300, 300,
                 ),
                 arguments(
-                    named("expected", MaxSumOf3x3SquareResult(sum = 30, x = 21, y = 61)),
-                    named("k", 42), named("gridWidth", 300), named("gridHeight", 300)
+                    MaxSumOf3x3SquareResult(sum = 30, x = 21, y = 61),
+                    42, 300, 300
                 ),
             )
         }
@@ -45,12 +44,12 @@ class MaxSquareSumTest {
         class ArgumentsProviderMaxSumOfAnySquare : ArgumentsProvider {
             override fun provideArguments(p0: ExtensionContext?) = Stream.of(
                 arguments(
-                    named("expected", MaxSumOfSquareResult(sum = 113, x = 90, y = 269, size = 16)),
-                    named("k", 18), named("gridWidth", 300), named("gridHeight", 300)
+                    MaxSumOfSquareResult(sum = 113, x = 90, y = 269, size = 16),
+                    18, 300, 300,
                 ),
                 arguments(
-                    named("expected", MaxSumOfSquareResult(sum = 119, x = 232, y = 251, size = 12)),
-                    named("k", 42), named("gridWidth", 300), named("gridHeight", 300)
+                    MaxSumOfSquareResult(sum = 119, x = 232, y = 251, size = 12),
+                    42, 300, 300,
                 ),
             )
         }
