@@ -173,6 +173,46 @@ import java.util.*
  * 5   \------/
  * ```
  *
+ * ### Part 2
+ *
+ * Find the coordinates of the last remaining cart after all other carts have been eliminated by collisions.
+ *
+ * - An example with multiple carts:
+ * ```
+ * />-<\
+ * |   |
+ * | /<+-\
+ * | | | v
+ * \>+</ |
+ *   |   ^
+ *   \<->/
+ *
+ * /---\
+ * |   |
+ * | v-+-\
+ * | | | |
+ * \-+-/ |
+ *   |   |
+ *   ^---^
+ *
+ * /---\
+ * |   |
+ * | /-+-\
+ * | v | |
+ * \-+-/ |
+ *   ^   ^
+ *   \---/
+ *
+ * /---\
+ * |   |
+ * | /-+-\
+ * | | | |
+ * \-+-/ ^
+ *   |   |
+ *   \---/
+ * ```
+ *
+ * The last remaining cart is at location 6,4.
  *
  */
 class CartsAndTracks {
@@ -180,19 +220,38 @@ class CartsAndTracks {
 
     fun findLocationOfFirstCollision(trackGridWithCarts: List<String>): Point {
         val trackGridAndInitialCarts = splitIntoTrackGridAndCarts(trackGridWithCarts)
-        with(trackGridAndInitialCarts) {
-            println(trackGrid.joinToString("\n") { it.joinToString("") { it.gridChar.toString() } })
-            println(carts.joinToString("\n"))
+//        with(trackGridAndInitialCarts) {
+//            println(trackGrid.joinToString("\n") { it.joinToString("") { it.gridChar.toString() } })
+//            println(carts.joinToString("\n"))
+//        }
+        with(CartEmulator(trackGridAndInitialCarts)) {
+            while (collisionPoint == null) {
+                emulateTick()
+//                println("$tickCounter tick(s):")
+//                println(getCartPointsAndDirections())
+//                println()
+            }
+//            println("Collision at $collisionPoint")
+            return collisionPoint!!
         }
-        val emulator = CartEmulator(trackGridAndInitialCarts)
-        while (emulator.collisionPoint == null) {
-            emulator.emulateTick()
-            println("${emulator.tickCounter} tick(s):")
-            println(emulator.getCartPointsAndDirections())
-            println()
+    }
+
+    fun findLocationOfRemainingCartAfterLastCollision(trackGridWithCarts: List<String>): Point {
+        val trackGridAndInitialCarts = splitIntoTrackGridAndCarts(trackGridWithCarts)
+        with(CartEmulator(trackGridAndInitialCarts)) {
+            while (getCartPointsAndDirections().size > 1) {
+                emulateTick(terminateOnCollision = false)
+//                println("$tickCounter tick(s):")
+//                println(getCartPointsAndDirections().joinToString("\n"))
+//                println()
+            }
+            require(getCartPointsAndDirections().size == 1) {
+                "One cart was expected to remain but there were ${getCartPointsAndDirections().size}."
+            }
+            val remainingCart = getCartPointsAndDirections().single()
+//            println("Last remaining cart: $remainingCart")
+            return remainingCart.first
         }
-        println("Collision at ${emulator.collisionPoint}")
-        return emulator.collisionPoint!!
     }
 
     private data class TrackGridAndCarts(
@@ -248,7 +307,9 @@ class CartsAndTracks {
         fun emulateTick(terminateOnCollision: Boolean = true) {
             tickCounter++
             val currCartPositions = cartPositionsAndDirections.keys.toList()
+            val collidedCartPositions = hashSetOf<Point>()
             for (p in currCartPositions) {
+                if (p in collidedCartPositions) continue
                 val cartDir = cartPositionsAndDirections.remove(p) ?: error("Missing map entry: should never happen")
                 val trackCell = trackGrid[p.y][p.x]
                 require(trackCell != Empty) { "Track cell must not be empty." }
@@ -310,8 +371,11 @@ class CartsAndTracks {
                     if (terminateOnCollision) {
                         return
                     }
-                    // Otherwise remove the other cart from collision location
+                    // If a cart was already added back at collision point then remove it.
                     cartPositionsAndDirections.remove(pNext)
+                    // Mark collision point so that if the other cart at the collision point is still to be processed
+                    // then it will not be added back to cartPositionsAndDirections.
+                    collidedCartPositions += pNext
                 } else {
                     // No collision, add the current cart at its location
                     cartPositionsAndDirections[pNext] = cartDir
@@ -378,6 +442,10 @@ private fun printResult(inputFileName: String) {
     // part 1
     val res1 = solver.findLocationOfFirstCollision(input)
     println("Location of first collision: $res1")
+
+    // part 2
+    val res2 = solver.findLocationOfRemainingCartAfterLastCollision(input)
+    println("Location of remaining cart after other carts collided: $res2")
 }
 
 fun main() {
